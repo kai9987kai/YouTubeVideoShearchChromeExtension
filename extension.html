@@ -1,46 +1,310 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head> 
-
-	<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'> 
-	<link href='style.css' rel='stylesheet' type='text/css'> 
-
-	<meta name="viewport" content="width=device-width" /> 
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /> 
-
-	<title>Star Wars Nuggets</title> 
-
-	<script type="text/javascript" src="https://www.google.com/jsapi"></script> 
-	<script type="text/javascript" src="feed.js"></script>
-
-	<base target="_blank">
-
-</head>
-
-
-<body bgcolor="#FFF"> 
-	<table class="body-wrap"> 
-		<tr> 
-			<td class="container"> 
-				<div class="content"> 
-					<div id="pattern" class="pattern"> 
-						<form action="http://www.youtube.com/channel/UClz3lLJyDq5Jh1-Ete2JmJA/search" method="get" class="f" target="_blank"> 
-							<input type="search" name="query" placeholder="Search Videos.." /> 
-							<input type="submit" class="btn search-submit" value="Search"> 
-						</form>
-					</div> 
-					<div id="feed"></div> 
-					<div id="logo">
-						<a href="http://www.youtube.com/UClz3lLJyDq5Jh1-Ete2JmJA?view_as=subscriber"><img src="icon.jpg" /></a>
-					</div> 
-				</div> 
-			</td>
-		</tr> 
-	</table> 
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Star Wars Nuggets Home Extension</title>
+  <style>
+    /* CSS Reset */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
+      color: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    /* Dark mode styles */
+    body.dark-mode {
+      background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+      color: #222;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(8px);
+      max-width: 600px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: slideUp 0.6s ease-out;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    /* Logo styles */
+    #logo {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    #logo img {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 2px solid #ff4500;
+      transition: transform 0.3s ease;
+    }
+    #logo img:hover {
+      transform: scale(1.1);
+    }
+    /* Search container */
+    .search-container {
+      display: flex;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    .search-container input[type="search"] {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      outline: none;
+    }
+    .search-container button {
+      padding: 12px 20px;
+      margin-left: 10px;
+      border: none;
+      background-color: #ff4500;
+      color: #fff;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .search-container button:hover {
+      background-color: #e03e00;
+    }
+    /* Suggestions */
+    #suggestions {
+      width: 100%;
+      margin-bottom: 15px;
+    }
+    .suggestion-item {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 8px 12px;
+      margin: 4px 0;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .suggestion-item:hover {
+      background: rgba(0, 0, 0, 0.5);
+    }
+    /* History */
+    #history {
+      width: 100%;
+      margin-top: 15px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 4px;
+      padding: 10px;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    #history h3 {
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+    #history ul {
+      list-style: none;
+    }
+    #history li {
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 14px;
+    }
+    /* Theme toggle button */
+    .toggle-theme {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #444;
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .toggle-theme:hover {
+      background: #333;
+    }
+    /* Modal styling */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 10;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      align-items: center;
+      justify-content: center;
+    }
+    .modal.active {
+      display: flex;
+    }
+    .modal-content {
+      background: #222;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+      animation: fadeIn 0.5s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-content h2 {
+      margin-bottom: 15px;
+      font-size: 24px;
+    }
+    .modal-content img {
+      width: 100%;
+      border-radius: 4px;
+      margin-bottom: 15px;
+    }
+    .modal-close {
+      padding: 10px 20px;
+      background: #ff4500;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .modal-close:hover {
+      background: #e03e00;
+    }
+  </style>
 </head>
 <body>
-<a href="https://www.youtube.com/channel/UClz3lLJyDq5Jh1-Ete2JmJA" target="_blank">Visit Star Wars Nuggets Channel</a>
+  <button class="toggle-theme" id="toggleTheme">Toggle Theme</button>
+  <div class="container">
+    <div id="logo">
+      <a href="https://www.youtube.com/channel/UClz3lLJyDq5Jh1-Ete2JmJA" target="_blank">
+        <img src="https://yt3.googleusercontent.com/saxOCaDWO_yPhN2mUB4NXuZamIl1Be3GYEEIvghvR3fsha-_FueoQQI5cZBoRh1dE-wURsl2Ng=s160-c-k-c0x00ffffff-no-rj" alt="Channel Logo">
+      </a>
+    </div>
+    <div class="search-container">
+      <input type="search" id="searchInput" placeholder="Search Videos...">
+      <button id="searchBtn">Search</button>
+    </div>
+    <div id="suggestions"></div>
+    <div id="history">
+      <h3>Search History</h3>
+      <ul id="historyList"></ul>
+    </div>
+    <button id="showModal">View DALL‑E Image</button>
+  </div>
+
+  <!-- Modal for displaying DALL‑E–inspired art -->
+  <div class="modal" id="dalleModal">
+    <div class="modal-content">
+      <h2>Star Wars Inspired Art</h2>
+      <!-- Replace the URL below with an actual DALL‑E generated image URL if available -->
+      <img src="https://via.placeholder.com/400x300.png?text=DALL-E+Image" alt="DALL‑E Art">
+      <button class="modal-close" id="closeModal">Close</button>
+    </div>
+  </div>
+
+  <script>
+    // Theme toggling using Chrome storage if available
+    const toggleThemeBtn = document.getElementById('toggleTheme');
+    toggleThemeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.sync.set({ darkMode: document.body.classList.contains('dark-mode') });
+      }
+    });
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      chrome.storage.sync.get('darkMode', (data) => {
+        if (data.darkMode) document.body.classList.add('dark-mode');
+      });
+    }
+
+    // Search functionality with live suggestions and history
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const suggestionsDiv = document.getElementById('suggestions');
+    const historyList = document.getElementById('historyList');
+
+    function loadHistory() {
+      const history = JSON.parse(localStorage.getItem('searchHistory')) || [];
+      historyList.innerHTML = '';
+      history.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        historyList.appendChild(li);
+      });
+    }
+    loadHistory();
+
+    function saveHistory(query) {
+      let history = JSON.parse(localStorage.getItem('searchHistory')) || [];
+      if (!history.includes(query)) {
+        history.unshift(query);
+        if (history.length > 10) history.pop();
+        localStorage.setItem('searchHistory', JSON.stringify(history));
+      }
+      loadHistory();
+    }
+
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.trim();
+      suggestionsDiv.innerHTML = '';
+      if (query.length > 1) {
+        const suggestions = [
+          query + ' trailer',
+          query + ' review',
+          query + ' analysis',
+          'Best of ' + query
+        ];
+        suggestions.forEach(sugg => {
+          const div = document.createElement('div');
+          div.textContent = sugg;
+          div.className = 'suggestion-item';
+          div.addEventListener('click', () => {
+            searchInput.value = sugg;
+            suggestionsDiv.innerHTML = '';
+          });
+          suggestionsDiv.appendChild(div);
+        });
+      }
+    });
+
+    searchBtn.addEventListener('click', () => {
+      const query = searchInput.value.trim();
+      if (query) {
+        saveHistory(query);
+        const searchURL = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(query);
+        window.open(searchURL, '_blank');
+      }
+    });
+
+    // Modal functionality for DALL‑E image display
+    const showModalBtn = document.getElementById('showModal');
+    const dalleModal = document.getElementById('dalleModal');
+    const closeModalBtn = document.getElementById('closeModal');
+    showModalBtn.addEventListener('click', () => {
+      dalleModal.classList.add('active');
+    });
+    closeModalBtn.addEventListener('click', () => {
+      dalleModal.classList.remove('active');
+    });
+
+    console.log("Home extension initialized with advanced, responsive features.");
+  </script>
 </body>
 </html>
-
